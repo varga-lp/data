@@ -12,13 +12,6 @@ const (
 	migrations = `
 	CREATE SEQUENCE IF NOT EXISTS futures_id_seq;
 
-	CREATE TABLE IF NOT EXISTS symbols (
-		id BIGSERIAL PRIMARY KEY,
-		symbol VARCHAR(30) NOT NULL
-	);
-
-	CREATE UNIQUE INDEX IF NOT EXISTS index_symbols_on_symbol ON symbols (symbol);
-
 	CREATE TABLE IF NOT EXISTS futures (
 		id BIGINT NOT NULL DEFAULT nextval('futures_id_seq'),
 		symbol VARCHAR(30) NOT NULL,

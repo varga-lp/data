@@ -24,3 +24,10 @@ func EnvIsDev() bool {
 func EnvIsProd() bool {
 	return env == "prod"
 }
+
+func FuturesEP() string {
+	if EnvIsDev() {
+		return "https://testnet.binancefuture.com"
+	}
+	return "https://fapi.binance.com"
+}
