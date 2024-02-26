@@ -6,17 +6,13 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/varga-lp/data/config"
 )
 
 const (
-	KlineInterval      = "3m"
-	KlineMinKlineCount = 1
-	KlineMaxKlineCount = 31 * 24 * 60 / 3 // 31 days
-
-	TargetKlineBuffer = 4 * 60 * 1000  // 5 minutes
-	MaxKlineBuffer    = 10 * 60 * 1000 // 10 minutes
+	KlineInterval = "3m"
 )
 
 type Kline struct {
@@ -29,6 +25,7 @@ type Kline struct {
 	TakerBuyVolume float64
 	NumberOfTrades int64
 	CloseTime      int64
+	IsFinal        bool
 }
 
 func Fetch(symbol string, endTime int64) ([]Kline, error) {
@@ -94,6 +91,7 @@ func parseKlines(klines [][]interface{}) ([]Kline, error) {
 			TakerBuyVolume: floats[5],
 			NumberOfTrades: openCloseNot[2],
 			CloseTime:      openCloseNot[1],
+			IsFinal:        time.Now().UnixMilli() > openCloseNot[1],
 		})
 	}
 	return result, nil
