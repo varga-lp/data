@@ -7,18 +7,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/varga-lp/data/klines"
+	"github.com/varga-lp/data/books"
 )
 
 func main() {
 	shutdownCh := make(chan os.Signal, 1)
 	signal.Notify(shutdownCh, syscall.SIGINT, syscall.SIGTERM)
 
-	klineChan := make(chan klines.Kline)
+	bookChan := make(chan books.Book)
 	closeChan := make(chan struct{})
 	errChan := make(chan error)
 
-	st := klines.NewStreamer("BTCUSDT", klineChan, errChan, closeChan)
+	st := books.NewStreamer("BTCUSDT", bookChan, errChan, closeChan)
 	if err := st.Dial(); err != nil {
 		panic(err)
 	}
@@ -26,8 +26,8 @@ func main() {
 	go func() {
 		for {
 			select {
-			case kline := <-klineChan:
-				log.Println(kline)
+			case book := <-bookChan:
+				log.Println(book)
 			case err := <-errChan:
 				log.Fatal(err)
 			}
