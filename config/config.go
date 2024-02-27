@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"os"
+	"time"
+)
 
 var (
 	env = os.Getenv("VARGA_ENV")
@@ -26,4 +29,8 @@ func MarketStreamEP() string {
 		return "fstream.binancefuture.com"
 	}
 	return "fstream.binance.com"
+}
+
+func WSReconnectBuffer() time.Duration {
+	return 5 * time.Second
 }

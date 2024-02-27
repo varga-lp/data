@@ -3,9 +3,11 @@ package klines
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/varga-lp/data/config"
@@ -71,18 +73,18 @@ type Streamer struct {
 	symbol     string
 	streamName string
 	updateChan chan<- Kline
-	errorChan  chan<- error
+	errChan    chan error
 	closeChan  <-chan struct{}
 }
 
-func NewStreamer(symbol string, updateChan chan<- Kline, errChan chan<- error, closeChan <-chan struct{}) *Streamer {
+func NewStreamer(symbol string, updateChan chan<- Kline, closeChan <-chan struct{}) *Streamer {
 	symL := strings.ToLower(symbol)
 
 	return &Streamer{
 		symbol:     symbol,
 		streamName: fmt.Sprintf("ws/%s@kline_%s", symL, KlineInterval),
 		updateChan: updateChan,
-		errorChan:  errChan,
+		errChan:    make(chan error),
 		closeChan:  closeChan,
 	}
 }
@@ -98,22 +100,39 @@ func (s *Streamer) Dial() error {
 		for {
 			select {
 			case <-s.closeChan:
+				return
+			case err := <-s.errChan:
+				defer c.Close()
+				// reconnect on error
+				defer s.Dial()
+
+				log.Println(s.symbol, "kline streamer error:", err)
+				time.Sleep(config.WSReconnectBuffer())
+				return
+			}
+		}
+	}()
+
+	go func() {
+		for {
+			select {
+			case <-s.closeChan:
 				c.Close()
 				return
 			default:
 				_, message, err := c.ReadMessage()
 				if err != nil {
-					s.errorChan <- err
+					s.errChan <- err
 					return
 				}
 				var kr klineResp
 				if err := json.Unmarshal(message, &kr); err != nil {
-					s.errorChan <- err
+					s.errChan <- err
 					return
 				}
 				kline, err := kr.toKline()
 				if err != nil {
-					s.errorChan <- err
+					s.errChan <- err
 					return
 				}
 				s.updateChan <- kline
