@@ -28,9 +28,9 @@ type Kline struct {
 	IsFinal        bool
 }
 
-func Fetch(symbol string, endTime int64) ([]Kline, error) {
-	url := fmt.Sprintf("%s/fapi/v1/klines?symbol=%s&interval=%s&endTime=%d",
-		config.FuturesEP(), symbol, KlineInterval, endTime)
+func FetchFromStart(symbol string, startTime int64) ([]Kline, error) {
+	url := fmt.Sprintf("%s/fapi/v1/klines?symbol=%s&interval=%s&startTime=%d",
+		config.FuturesEP(), symbol, KlineInterval, startTime)
 
 	response, err := http.Get(url)
 	if err != nil {
